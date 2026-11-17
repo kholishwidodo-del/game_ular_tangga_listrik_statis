@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ular Tangga Listrik Statis</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg1:#d9f4ff;--bg2:#ffe3f3;--card:#ffffff;--ink:#14183a;--mut:#4a5385;--line:#b9c4f0;--c1:#ffe97a;--c2:#9ff0e0;--pri:#6a3dff;--acc:#ff9f0a;--ok:#00a869;--bad:#e8315b;--grid:#4b57a8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -98,7 +99,51 @@ const ctr=n=>{let r=Math.floor((n-1)/10),c=(n-1)%10;if(r%2)c=9-c;return [(c+.5)*
 const myId=()=>R&&R.peers().find(p=>p.isMe)?.peer;
 const canAct=()=>S&&(mode==='local'||S.players[S.turn].id===myId());
 
-(async()=>{try{const r=await window.claude?.use('room');if(r){window.__room=r;} }catch(e){} lobby();})();
+
+/* ===== Adapter PeerJS: tuan rumah = penghubung semua pemain ===== */
+const PJ={async join(name){
+  const hostId='utsk-'+name;let peer,isHost=false,myId,hostConn=null,list=[],left=false;
+  const conns=new Map(),H={st:[],pe:[]};
+  const open=id=>new Promise((res,rej)=>{const p=id?new Peer(id):new Peer();p.on('open',()=>res(p));p.on('error',rej)});
+  const toP=e=>({peer:e.id,isMe:e.id===myId,presence:{n:e.n,t:e.t}});
+  const up=(l,e)=>l.filter(x=>x.id!==e.id).concat(e);
+  const dlv=data=>H.st.forEach(f=>f({isMe:false,data}));
+  const bcast=()=>conns.forEach(c=>c.open&&c.send({k:'ro',list}));
+  const setRoster=nl=>{const old=list;if(JSON.stringify(old)===JSON.stringify(nl))return;list=nl;
+    const J=nl.filter(e=>!old.some(o=>o.id===e.id)),Lf=old.filter(o=>!nl.some(e=>e.id===o.id));
+    H.pe.forEach(f=>f({peers:nl.map(toP),joined:J.map(toP),left:Lf.map(toP),updated:[]}))};
+  const banner=m=>{const d=document.createElement('div');d.className='card';d.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:60;text-align:center;border-color:var(--bad)';d.textContent=m;document.body.appendChild(d)};
+  try{peer=await open(hostId);isHost=true}catch(e){if(e.type!=='unavailable-id')throw e;peer=await open(null)}
+  myId=peer.id;
+  if(isHost){
+    peer.on('connection',c=>{
+      c.on('open',()=>conns.set(c.peer,c));
+      c.on('data',d=>{if(!d)return;
+        if(d.k==='hi'){const o=list.find(e=>e.id===c.peer);setRoster(up(list,{id:c.peer,n:String(d.n||'?').slice(0,14),t:o?o.t:Date.now()}));bcast()}
+        else if(d.k==='st'){dlv(d.data);conns.forEach((x,id)=>{if(id!==c.peer&&x.open)x.send(d)})}});
+      c.on('close',()=>{conns.delete(c.peer);setRoster(list.filter(e=>e.id!==c.peer));bcast()});
+      c.on('error',()=>{});
+    });
+  }else{
+    try{
+      hostConn=peer.connect(hostId,{reliable:true});
+      await new Promise((res,rej)=>{hostConn.on('open',res);peer.on('error',rej);setTimeout(()=>rej(new Error('Tuan rumah tidak ditemukan. Pastikan tuan rumah sudah masuk dengan kode yang sama.')),9000)});
+    }catch(e){try{peer.destroy()}catch(_){}throw e}
+    hostConn.on('data',d=>{if(!d)return;if(d.k==='ro')setRoster(d.list);else if(d.k==='st')dlv(d.data)});
+    hostConn.on('close',()=>{if(!left)banner('Koneksi ke tuan rumah terputus. Muat ulang halaman lalu gabung lagi.')});
+  }
+  return{
+    peers:()=>list.map(toP),
+    on:(t,f)=>{H.st.push(f);return()=>{H.st=H.st.filter(x=>x!==f)}},
+    onPeers:f=>{H.pe.push(f);return()=>{H.pe=H.pe.filter(x=>x!==f)}},
+    emit:async(t,data)=>{const m={k:'st',data};if(isHost)conns.forEach(c=>c.open&&c.send(m));else if(hostConn&&hostConn.open)hostConn.send(m)},
+    presence:async p=>{if(p.n==null||left)return;
+      if(isHost){setRoster(up(list,{id:myId,n:p.n,t:0}));bcast()}else if(hostConn&&hostConn.open)hostConn.send({k:'hi',n:p.n})},
+    leave:async()=>{left=true;try{peer.destroy()}catch(e){}}
+  };
+}};
+if(window.Peer)window.__room=PJ;
+lobby();
 
 function lobby(){
   if(S)return;
@@ -114,9 +159,9 @@ function lobbyLocal(){
 }
 function lobbyOnline(){
   updExit();const rm=window.__room;
-  if(!rm){$('#lb').innerHTML=`<p class="mut">Mode online belum tersedia di tampilan ini. Buka halaman lewat tautan artefak yang dibagikan, atau pilih <b>Satu layar</b>.</p>`;return}
+  if(!rm){$('#lb').innerHTML=`<p class="mut">Pustaka PeerJS gagal dimuat (periksa koneksi internet). Muat ulang halaman, atau pilih <b>Satu layar</b>.</p>`;return}
   if(!R){
-    $('#lb').innerHTML=`<p class="mut">Semua siswa memasukkan <b>kode kelas yang sama</b> untuk bergabung (maks. 5 pemain).</p>
+    $('#lb').innerHTML=`<p class="mut">Semua siswa memasukkan <b>kode kelas yang sama</b> untuk bergabung (maks. 5 pemain). Siswa yang pertama masuk menjadi tuan rumah 👑 dan jangan menutup halaman selama bermain.</p>
     <input id="nm" maxlength="14" placeholder="Nama kamu" value="${esc(myName)}"><input id="rc" maxlength="16" placeholder="Kode kelas" value="${esc(roomCode)}">
     <button id="jn" class="big" style="margin-top:14px">🔌 Gabung</button><p id="er" class="mut"></p>`;
     $('#jn').onclick=async()=>{
