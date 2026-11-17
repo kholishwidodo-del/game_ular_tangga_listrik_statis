@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ular Tangga Listrik Statis</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#d9f4ff;--bg2:#ffe3f3;--card:#ffffff;--ink:#14183a;--mut:#4a5385;--line:#b9c4f0;--c1:#ffe97a;--c2:#9ff0e0;--pri:#6a3dff;--acc:#ff9f0a;--ok:#00a869;--bad:#e8315b;--grid:#4b57a8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#0c1040;--bg2:#3a0f66;--card:#1a1f5e;--ink:#f6f7ff;--mut:#c4caff;--line:#4650b8;--c1:#6a2fd6;--c2:#0a7ac2;--pri:#a98bff;--acc:#ffd23f;--ok:#2cf0a0;--bad:#ff5c7c;--grid:#c7ceff}}
+:root[data-theme="dark"]{--bg1:#0c1040;--bg2:#3a0f66;--card:#1a1f5e;--ink:#f6f7ff;--mut:#c4caff;--line:#4650b8;--c1:#6a2fd6;--c2:#0a7ac2;--pri:#a98bff;--acc:#ffd23f;--ok:#2cf0a0;--bad:#ff5c7c;--grid:#c7ceff}
+*{box-sizing:border-box}html,body{height:auto;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;min-height:100vh;padding:14px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg1)}
+h1{margin:0;font-size:clamp(22px,4.5vw,34px);letter-spacing:.3px}
+h1 span{color:var(--acc)}
+.top{text-align:center;margin:6px 0 14px}.top p{margin:4px 0 0;color:var(--mut);font-size:14px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 8px 24px rgba(40,40,120,.12)}
+.wrap{max-width:1080px;margin:auto}
+.game{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+.bw{flex:1 1 380px;max-width:640px;min-width:0}
+.board{position:relative;width:100%;aspect-ratio:1;border-radius:18px;overflow:hidden;border:4px solid var(--pri);box-shadow:0 10px 30px rgba(60,40,200,.25)}
+.board svg{position:absolute;inset:0;width:100%;height:100%}
+.tok{position:absolute;width:5.6%;height:5.6%;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:clamp(9px,2.2vw,16px);transform:translate(-50%,-50%);transition:left .9s cubic-bezier(.5,0,.3,1),top .9s cubic-bezier(.5,0,.3,1);box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:3}
+.tok.act{animation:bob .8s infinite;z-index:4}
+@keyframes bob{50%{margin-top:-6px}}
+.side{flex:1 1 320px;max-width:420px;display:flex;flex-direction:column;gap:12px}
+.pl{display:flex;flex-direction:column;gap:6px}
+.p{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;border:2px solid transparent;background:var(--bg1)}
+.p.act{border-color:var(--acc);background:var(--c1);transform:scale(1.02)}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:18px;border:2px solid #fff;flex:none}
+.p b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p small{color:var(--mut)}
+.dice{font-size:84px;line-height:1;text-align:center;user-select:none;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}
+.dice.r{animation:spin .25s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;font-weight:600;color:#fff;background:linear-gradient(135deg,#6c4bff,#00a8ff);box-shadow:0 4px 0 rgba(0,0,0,.22);transition:transform .1s}
+button:hover:not(:disabled){transform:translateY(-1px)}button:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.22)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.big{width:100%;font-size:20px;background:linear-gradient(90deg,#ff9f0a,#ff2e7e)}
+.opt{display:block;width:100%;text-align:left;margin-top:8px;background:var(--bg1);color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.opt.ok{background:var(--ok);color:#fff;border-color:var(--ok)}.opt.no{background:var(--bad);color:#fff;border-color:var(--bad)}
+.q{font-size:17px;font-weight:600;line-height:1.35}
+.tag{display:inline-block;background:var(--acc);color:#2a1b00;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700;margin-bottom:8px}
+.res{padding:10px 12px;border-radius:12px;margin:8px 0;font-weight:600}
+.res.ok{background:color-mix(in srgb,var(--ok) 22%,transparent)}.res.bad{background:color-mix(in srgb,var(--bad) 22%,transparent)}
+.mut{color:var(--mut);font-size:14px}
+input{font:inherit;width:100%;padding:11px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg1);color:var(--ink);margin-top:8px}
+.tabs{display:flex;gap:8px;margin-bottom:10px}.tabs button{flex:1;background:var(--bg1);color:var(--ink);box-shadow:none;border:2px solid var(--line)}.tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.lobby{max-width:480px;margin:auto}
+.legend{display:flex;gap:14px;justify-content:center;font-size:13px;color:var(--mut);margin-top:8px;flex-wrap:wrap}
+.win{text-align:center}.win .t{font-size:64px}
+.top{position:relative}.ex{position:absolute;right:0;top:0;padding:8px 14px;font-size:14px;background:linear-gradient(135deg,#ff4d6d,#ff8a00)}@media(max-width:560px){.ex{position:static;margin-bottom:8px}}
+@media (prefers-reduced-motion:reduce){.tok,.dice.r,.tok.act{animation:none;transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><button class="ex" id="exit" hidden>🚪 Keluar</button><h1>⚡ Ular Tangga <span>Listrik Statis</span> ⚡</h1><p>IPA Kelas IX · Jawab soal dengan benar agar bidakmu bisa melangkah!</p></div>
+  <div id="app"></div>
+</div>
+<script>
+const AV=['🦊','🐼','🐯','🐸','🦄'],COL=['#ff3b5c','#00a2ff','#ffb800','#00d68f','#b44dff'];
+const J={4:25,13:46,33:52,42:63,50:69,62:81,74:92,27:5,40:3,43:18,54:31,66:45,76:58,89:53,95:75};
+// [pertanyaan, [jawaban benar, salah, salah, salah], penjelasan]
+const Q=[
+["Benda menjadi bermuatan positif apabila...",["kehilangan elektron","menerima elektron","kehilangan proton","menerima neutron"],"Proton tidak berpindah. Benda bermuatan positif karena kehilangan elektron."],
+["Dua benda bermuatan sejenis jika didekatkan akan...",["tolak-menolak","tarik-menarik","tidak terjadi apa-apa","saling menetralkan"],"Muatan sejenis tolak-menolak, muatan berlainan jenis tarik-menarik."],
+["Satuan muatan listrik dalam SI adalah...",["Coulomb","Volt","Ampere","Newton"],"Satuan muatan listrik adalah Coulomb (C)."],
+["Penggaris plastik digosok kain wol lalu didekatkan ke serpihan kertas. Serpihan kertas akan...",["tertarik ke penggaris","tertolak menjauh","tetap diam","menjadi bermuatan sama"],"Penggaris bermuatan menginduksi kertas sehingga kertas tertarik."],
+["Menurut Hukum Coulomb, gaya listrik berbanding terbalik dengan...",["kuadrat jarak antar muatan","jarak antar muatan","besar muatan","massa muatan"],"F = k·q1·q2 / r², jadi F berbanding terbalik dengan r²."],
+["Jarak dua muatan dijadikan 2 kali semula. Gaya Coulomb menjadi...",["1/4 kali","1/2 kali","2 kali","4 kali"],"F ~ 1/r². Jika r jadi 2 kali, F menjadi 1/4 kali."],
+["Alat untuk mengetahui suatu benda bermuatan listrik atau tidak adalah...",["elektroskop","amperemeter","voltmeter","galvanometer"],"Elektroskop mendeteksi muatan listrik lewat mengembangnya daun logam."],
+["Tiga cara memberi muatan pada benda adalah...",["gosokan, konduksi, induksi","gosokan, radiasi, konveksi","induksi, difusi, osmosis","konduksi, refleksi, refraksi"],"Benda dapat dimuati dengan cara digosok, disentuh (konduksi), dan induksi."],
+["Muatan elektron adalah...",["negatif","positif","netral","tergantung bendanya"],"Elektron bermuatan negatif sebesar -1,6 × 10⁻¹⁹ C."],
+["Berikut yang termasuk isolator adalah...",["karet","tembaga","aluminium","besi"],"Karet dan plastik adalah isolator. Logam adalah konduktor."],
+["Penangkal petir berfungsi untuk...",["mengalirkan muatan petir ke tanah","menghasilkan petir","menyimpan muatan petir","menolak awan"],"Penangkal petir menyalurkan muatan ke tanah sehingga bangunan aman."],
+["Batang kaca digosok kain sutra. Muatan yang dimiliki batang kaca adalah...",["positif","negatif","netral","positif dan negatif sama besar"],"Kaca melepas elektron sehingga bermuatan positif, sutra menjadi negatif."],
+["Dua muatan 2×10⁻⁶ C dan 3×10⁻⁶ C berjarak 0,3 m (k = 9×10⁹ N·m²/C²). Gaya Coulomb adalah...",["0,6 N","0,06 N","6 N","1,8 N"],"F = 9×10⁹ · 6×10⁻¹² / 0,09 = 0,6 N."],
+["Daun elektroskop mengembang ketika dimuati karena...",["muatan sejenis pada kedua daun saling tolak","muatan berlawanan saling tarik","daun menjadi panas","daun bertambah berat"],"Kedua daun bermuatan sejenis sehingga saling menolak."],
+["Arah medan listrik di sekitar muatan positif adalah...",["menjauhi muatan","mendekati muatan","melingkar","tidak memiliki arah"],"Garis medan listrik keluar dari muatan positif dan masuk ke muatan negatif."],
+["Atom netral memiliki...",["jumlah proton sama dengan jumlah elektron","proton lebih banyak","elektron lebih banyak","tidak ada proton"],"Atom netral: proton (+) dan elektron (-) sama banyak."],
+["Pada benda padat, partikel yang berpindah saat benda dimuati adalah...",["elektron","proton","neutron","inti atom"],"Hanya elektron yang dapat berpindah, proton terikat di inti."],
+["Hukum kekekalan muatan menyatakan bahwa muatan listrik...",["tidak dapat diciptakan maupun dimusnahkan","dapat dimusnahkan","selalu bertambah","selalu berkurang"],"Muatan hanya berpindah, jumlah total muatan tetap."],
+["Truk tangki BBM diberi rantai yang menyentuh tanah agar...",["muatan statis mengalir ke tanah","truk lebih berat","mesin lebih dingin","BBM lebih awet"],"Rantai membuang muatan statis ke tanah sehingga tidak timbul percikan api."],
+["Elektroskop netral disentuh benda bermuatan positif. Muatan elektroskop kini...",["positif","negatif","netral","tidak dapat ditentukan"],"Pada pemuatan konduksi, benda mendapat muatan sejenis dengan pemuatnya."],
+["Pada pemuatan induksi, benda yang dimuati akan bermuatan...",["berlawanan dengan benda pemuat","sama dengan benda pemuat","netral selamanya","tidak berubah"],"Induksi menghasilkan muatan yang berlawanan dengan benda pemuat."],
+["Sebuah benda kelebihan elektron maka benda tersebut bermuatan...",["negatif","positif","netral","bergantung massa"],"Kelebihan elektron berarti muatan negatif."],
+["Petir terjadi akibat...",["perpindahan muatan antara awan dan bumi atau awan lain","tabrakan awan","udara panas naik","pemantulan cahaya matahari"],"Petir adalah pelepasan muatan listrik skala besar di atmosfer."],
+["Jika salah satu muatan digandakan, sedangkan jarak tetap, gaya Coulomb menjadi...",["2 kali","1/2 kali","4 kali","tetap"],"F sebanding dengan q1·q2, sehingga menjadi 2 kali."]
+];
+
+let S=null,R=null,mode='online',roomCode='kelas9',myName='',rollTimer=null,diceRolling=false;
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ctr=n=>{let r=Math.floor((n-1)/10),c=(n-1)%10;if(r%2)c=9-c;return [(c+.5)*10,(9-r+.5)*10]};
+const myId=()=>R&&R.peers().find(p=>p.isMe)?.peer;
+const canAct=()=>S&&(mode==='local'||S.players[S.turn].id===myId());
+
+(async()=>{try{const r=await window.claude?.use('room');if(r){window.__room=r;} }catch(e){} lobby();})();
+
+function lobby(){
+  if(S)return;
+  const online=mode==='online';
+  app.innerHTML=`<div class="card lobby"><div class="tabs"><button id="tO" class="${online?'on':''}">🌐 Online</button><button id="tL" class="${!online?'on':''}">🖥️ Satu layar</button></div>
+  <div id="lb"></div></div>`;
+  $('#tO').onclick=()=>{mode='online';lobby()};$('#tL').onclick=()=>{mode='local';lobby()};
+  if(online)lobbyOnline();else lobbyLocal();
+}
+function lobbyLocal(){
+  $('#lb').innerHTML=`<p class="mut">Mainkan bergantian di satu perangkat (2–5 pemain).</p>`+[0,1,2,3,4].map(i=>`<input class="ln" maxlength="14" placeholder="${AV[i]} Nama pemain ${i+1}${i<2?'':' (opsional)'}">`).join('')+`<button id="go" class="big" style="margin-top:14px">🚀 Mulai Main</button>`;
+  $('#go').onclick=()=>{const ns=[...document.querySelectorAll('.ln')].map(e=>e.value.trim()).filter(Boolean);if(ns.length<2){const g=$('#go');g.textContent='Isi minimal 2 nama pemain';setTimeout(()=>g.textContent='🚀 Mulai Main',2200);return}start(ns.map((n,i)=>({id:'l'+i,name:n,av:i})))};
+}
+function lobbyOnline(){
+  updExit();const rm=window.__room;
+  if(!rm){$('#lb').innerHTML=`<p class="mut">Mode online belum tersedia di tampilan ini. Buka halaman lewat tautan artefak yang dibagikan, atau pilih <b>Satu layar</b>.</p>`;return}
+  if(!R){
+    $('#lb').innerHTML=`<p class="mut">Semua siswa memasukkan <b>kode kelas yang sama</b> untuk bergabung (maks. 5 pemain).</p>
+    <input id="nm" maxlength="14" placeholder="Nama kamu" value="${esc(myName)}"><input id="rc" maxlength="16" placeholder="Kode kelas" value="${esc(roomCode)}">
+    <button id="jn" class="big" style="margin-top:14px">🔌 Gabung</button><p id="er" class="mut"></p>`;
+    $('#jn').onclick=async()=>{
+      myName=$('#nm').value.trim();roomCode=($('#rc').value.toLowerCase().replace(/[^a-z0-9]/g,''))||'kelas9';
+      if(!myName){$('#er').textContent='Isi nama dulu ya.';return}
+      $('#jn').disabled=true;
+      try{R=await rm.join('ut-'+roomCode);
+        R.on('st',m=>{if(m.isMe||!R)return;const s=m.data;if(s&&(!S||s.v>S.v)){S=s;render()}});
+        R.onPeers(ch=>{if(!R)return;if(S){if(ch.joined.length&&!ch.joined.every(p=>p.isMe))R.emit('st',S).catch(()=>{});render()}else lobbyOnline()});
+        await R.presence({n:myName,t:Date.now()});
+        lobbyOnline();
+      }catch(e){R=null;$('#jn').disabled=false;$('#er').textContent='Gagal bergabung: '+(e.message||e.code||'coba lagi');}
+    };
+    return;
+  }
+  const ps=sortedPeers();
+  const host=ps[0]&&ps[0].isMe;
+  $('#lb').innerHTML=`<p><b>Ruang: ${esc(roomCode)}</b> · ${ps.length} pemain</p><div class="pl">`+ps.slice(0,5).map((p,i)=>`<div class="p"><div class="av" style="background:${COL[i]}">${AV[i]}</div><b>${esc(p.presence.n)}</b><small>${p.isMe?'(kamu)':''}${i==0?' 👑':''}</small></div>`).join('')+`</div>`+
+  (host?`<button id="go" class="big" style="margin-top:14px" ${ps.length<2?'disabled':''}>🚀 Mulai Main</button><p class="mut">${ps.length<2?'Menunggu pemain lain bergabung…':'Kamu adalah tuan rumah.'}</p>`:`<p class="mut" style="margin-top:14px">⏳ Menunggu tuan rumah (👑) memulai permainan…</p>`);
+  if(host&&$('#go'))$('#go').onclick=()=>start(ps.slice(0,5).map((p,i)=>({id:p.peer,name:p.presence.n,av:i})));
+}
+function sortedPeers(){return R.peers().filter(p=>p.presence&&p.presence.n).slice().sort((a,b)=>(a.presence.t-b.presence.t)||(a.peer<b.peer?-1:1))}
+
+function send(n){S=n;render();if(R)R.emit('st',n).catch(()=>{})}
+function updExit(){const b=$('#exit');if(b)b.hidden=!(S||R)}
+function exitGame(){
+  if($('#cf'))return;
+  const d=document.createElement('div');d.id='cf';
+  d.style.cssText='position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:20px';
+  d.innerHTML='<div class="card" style="max-width:340px;text-align:center"><h3 style="margin:0 0 6px">Keluar dari permainan?</h3><p class="mut">Kamu akan kembali ke halaman awal.</p><div style="display:flex;gap:10px"><button id="cn" style="flex:1;background:var(--mut)">Batal</button><button id="cy" style="flex:1;background:var(--bad)">Ya, keluar</button></div></div>';
+  document.body.appendChild(d);
+  $('#cn').onclick=()=>d.remove();
+  $('#cy').onclick=()=>{d.remove();doExit()};
+}
+async function doExit(){
+  clearInterval(rollTimer);diceRolling=false;
+  const r=R;R=null;S=null;tokKey='';
+  updExit();lobby();
+  try{if(r){await r.presence({n:null,t:null});await r.leave()}}catch(e){}
+}
+$('#exit').onclick=exitGame;
+function start(players){
+  send({v:(S?S.v:0)+1,players,pos:players.map(()=>0),sc:players.map(()=>0),turn:0,phase:'roll',dice:1,used:[],msg:'Permainan dimulai!'});
+}
+function roll(){
+  if(!canAct()||S.phase!=='roll'||diceRolling)return;
+  diceRolling=true;const d=$('#dice');d.classList.add('r');
+  let k=0;rollTimer=setInterval(()=>{d.textContent=String.fromCodePoint(0x2680+Math.floor(Math.random()*6));if(++k>8){clearInterval(rollTimer);finish()}},90);
+  function finish(){
+    diceRolling=false;
+    const dv=1+Math.floor(Math.random()*6);
+    let used=S.used.slice();if(used.length>=Q.length)used=[];
+    const pool=Q.map((_,i)=>i).filter(i=>!used.includes(i));
+    const qi=pool[Math.floor(Math.random()*pool.length)];used.push(qi);
+    const ord=[0,1,2,3].sort(()=>Math.random()-.5);
+    send({...S,v:S.v+1,phase:'q',dice:dv,qi,ord,used,msg:''});
+  }
+}
+function answer(k){
+  if(!canAct()||S.phase!=='q')return;
+  const ok=S.ord[k]===0,i=S.turn,pos=S.pos.slice(),sc=S.sc.slice();
+  let msg='',win=-1;
+  if(ok){
+    sc[i]++;let t=pos[i]+S.dice;
+    if(t>100){msg=`Butuh angka pas untuk sampai 100. Bidak tetap di ${pos[i]}.`}
+    else{msg=`Maju ${S.dice} langkah ke kotak ${t}.`;
+      if(J[t]){const up=J[t]>t;msg+=up?` 🪜 Naik tangga ke ${J[t]}!`:` 🐍 Digigit ular, turun ke ${J[t]}!`;t=J[t]}
+      pos[i]=t;if(t===100)win=i}
+  }else msg='Jawaban kurang tepat, bidak tidak bergerak.';
+  send({...S,v:S.v+1,phase:win>=0?'end':'res',pick:k,ok,pos,sc,msg,winner:win});
+}
+function next(){if(!canAct()||S.phase!=='res')return;send({...S,v:S.v+1,phase:'roll',turn:(S.turn+1)%S.players.length,pick:null,msg:''})}
+function skip(){send({...S,v:S.v+1,phase:'roll',turn:(S.turn+1)%S.players.length,msg:''})}
+function again(){start(S.players)}
+
+let boardBuilt=false,tokKey='';
+function buildBoard(){
+  let c='',s='';
+  for(let n=1;n<=100;n++){const [x,y]=ctr(n),r=Math.floor((n-1)/10),cc=(n-1)%10;
+    c+=`<rect x="${x-5}" y="${y-5}" width="10" height="10" fill="var(${(r+cc)%2?'--c1':'--c2'})" stroke="var(--grid)" stroke-width=".35"/><text x="${x-4.4}" y="${y-2.6}" font-size="2.7" fill="var(--ink)" fill-opacity=".75" font-weight="700">${n}</text>`}
+  Object.entries(J).forEach(([a,b],idx)=>{a=+a;const A=ctr(a),B=ctr(b),dx=B[0]-A[0],dy=B[1]-A[1],L=Math.hypot(dx,dy),nx=-dy/L,ny=dx/L;
+    if(b>a){const w=1.1;s+=`<g stroke="#d9822b" stroke-linecap="round"><line stroke-width="1" x1="${A[0]+nx*w}" y1="${A[1]+ny*w}" x2="${B[0]+nx*w}" y2="${B[1]+ny*w}"/><line stroke-width="1" x1="${A[0]-nx*w}" y1="${A[1]-ny*w}" x2="${B[0]-nx*w}" y2="${B[1]-ny*w}"/>`;
+      for(let t=.08;t<.95;t+=.9/Math.max(3,Math.round(L/4.5))){const px=A[0]+dx*t,py=A[1]+dy*t;s+=`<line stroke-width=".8" x1="${px+nx*w}" y1="${py+ny*w}" x2="${px-nx*w}" y2="${py-ny*w}"/>`}s+='</g>'}
+    else{const col=['#2fbf71','#e5484d','#9b5de5','#00a6c8'][idx%4],p1=[A[0]+dx*.33+nx*9,A[1]+dy*.33+ny*9],p2=[A[0]+dx*.66-nx*9,A[1]+dy*.66-ny*9];
+      const d=`M${A[0]} ${A[1]} C${p1[0]} ${p1[1]} ${p2[0]} ${p2[1]} ${B[0]} ${B[1]}`;
+      s+=`<path d="${d}" fill="none" stroke="#0006" stroke-width="2.6" stroke-linecap="round" transform="translate(.3 .4)"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#fff8" stroke-width=".7" stroke-dasharray="1 1.6" stroke-linecap="round"/><circle cx="${A[0]}" cy="${A[1]}" r="2.1" fill="${col}"/><circle cx="${A[0]-.7}" cy="${A[1]-.6}" r=".45" fill="#fff"/><circle cx="${A[0]+.7}" cy="${A[1]-.6}" r=".45" fill="#fff"/>`}
+  });
+  const [fx,fy]=ctr(100);
+  return `<svg viewBox="0 0 100 100">${c}${s}<text x="${fx}" y="${fy+3}" font-size="7" text-anchor="middle">🏆</text></svg><div id="toks"></div>`;
+}
+function render(){
+  updExit();if(!S){lobby();return}
+  if(!$('#panel')){app.innerHTML=`<div class="game"><div class="bw"><div class="board" id="board">${buildBoard()}</div><div class="legend"><span>🪜 Tangga = naik</span><span>🐍 Ular = turun</span><span>🏆 Kotak 100 = menang</span></div></div><div class="side" id="panel"></div></div>`;tokKey=''}
+  const key=S.players.map(p=>p.id).join();
+  if(key!==tokKey){tokKey=key;$('#toks').innerHTML=S.players.map((p,i)=>`<div class="tok" id="t${i}" style="background:${COL[i]}">${AV[i]}</div>`).join('')}
+  S.players.forEach((p,i)=>{const t=$('#t'+i);if(!t)return;const n=S.pos[i],[x,y]=n?ctr(n):[-6,95];
+    const same=S.players.map((_,j)=>j).filter(j=>S.pos[j]===n),o=same.indexOf(i),dx=(o%3-1)*2.2,dy=(Math.floor(o/3)-.3)*2.8;
+    t.style.left=(x+dx+(n?0:i*2.4))+'%';t.style.top=(y+dy)+'%';t.classList.toggle('act',i===S.turn&&S.phase!=='end')});
+  panel();
+}
+function panel(){
+  const P=S.players,a=P[S.turn],me=canAct();let h='';
+  h+=`<div class="card pl">`+P.map((p,i)=>`<div class="p ${i===S.turn&&S.phase!=='end'?'act':''}"><div class="av" style="background:${COL[i]}">${AV[i]}</div><b>${esc(p.name)}${R&&p.id===myId()?' (kamu)':''}</b><small>📍${S.pos[i]||'start'} · ⭐${S.sc[i]}</small></div>`).join('')+`</div>`;
+  const dface=String.fromCodePoint(0x2680+(S.dice-1));
+  if(S.phase==='roll'){
+    h+=`<div class="card"><div class="mut" style="text-align:center">Giliran</div><div style="text-align:center;font-size:22px;font-weight:700">${AV[S.turn]} ${esc(a.name)}</div><div id="dice" class="dice">${dface}</div>
+    <button class="big" id="rb" ${me?'':'disabled'}>${me?'🎲 Lempar Dadu':'Menunggu '+esc(a.name)+'…'}</button></div>`;
+  }else if(S.phase==='q'||S.phase==='res'){
+    const q=Q[S.qi],res=S.phase==='res';
+    h+=`<div class="card"><div class="tag">${dface.replace(/.*/,'🎲 Dadu: '+S.dice)} · ${esc(a.name)}</div><div class="q">${esc(q[0])}</div>`+
+    S.ord.map((o,k)=>{let c='';if(res){if(o===0)c='ok';else if(k===S.pick)c='no'}return `<button class="opt ${c}" data-k="${k}" ${(!res&&me)?'':'disabled'}>${'ABCD'[k]}. ${esc(q[1][o])}</button>`}).join('');
+    if(res)h+=`<div class="res ${S.ok?'ok':'bad'}">${S.ok?'✅ Benar!':'❌ Belum tepat.'} ${esc(S.msg)}</div><div class="mut">💡 ${esc(q[2])}</div><button class="big" id="nx" style="margin-top:10px" ${me?'':'disabled'}>${me?'Lanjut ➜':'Menunggu '+esc(a.name)+'…'}</button>`;
+    else h+=me?'':`<p class="mut">Menunggu ${esc(a.name)} menjawab…</p>`;
+    h+=`</div>`;
+  }else if(S.phase==='end'){
+    const w=P[S.winner],q=Q[S.qi];
+    const rank=P.map((p,i)=>i).sort((x,y)=>S.sc[y]-S.sc[x]);
+    h+=`<div class="card win"><div class="t">🏆</div><h2 style="margin:4px 0">${AV[S.winner]} ${esc(w.name)} menang!</h2><div class="mut">${esc(q[2])}</div><p>Poin benar terbanyak: <b>${esc(P[rank[0]].name)}</b> (⭐${S.sc[rank[0]]})</p><button class="big" id="ag">🔁 Main Lagi</button></div>`;
+  }
+  if(R&&S.phase!=='end'&&!R.peers().some(p=>p.peer===a.id))h+=`<button id="sk" style="background:var(--bad)">⏭️ ${esc(a.name)} terputus, lewati giliran</button>`;
+  $('#panel').innerHTML=h;
+  const g=id=>$('#'+id);
+  if(g('rb'))g('rb').onclick=roll;if(g('nx'))g('nx').onclick=next;if(g('ag'))g('ag').onclick=again;if(g('sk'))g('sk').onclick=skip;
+  document.querySelectorAll('.opt[data-k]').forEach(b=>b.onclick=()=>answer(+b.dataset.k));
+}
+</script>
+</body>
+</html>
